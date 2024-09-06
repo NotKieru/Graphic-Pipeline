@@ -1,71 +1,94 @@
-import pandas as pd
+# mundo3D.py
 import numpy as np
-import plotly.express as px
+import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
 
-def create_dataframe_from_points(point_set):
-    """
-    Cria um DataFrame a partir de um conjunto de pontos.
-    Cada item em 'point_set' deve ser uma lista de coordenadas (x, y, z).
-    """
-    if len(point_set) != 3:
-        raise ValueError("Cada item em 'point_set' deve ser uma lista de três listas (x, y, z).")
-    return pd.DataFrame({"x": point_set[0], "y": point_set[1], "z": point_set[2]})
+from plots import plot_solid_box, plot_solid_cano, plot_solid_cone, plot_solid_tronco
 
-def generate_random_color():
-    """
-    Gera uma cor RGB aleatória.
-    """
-    color = np.random.randint(255, size=3)
-    return f'rgb({color[0]}, {color[1]}, {color[2]})'
 
 def create_3d_lines():
-    """
-    Cria linhas de referência para os eixos x, y e z.
-    """
     lines = [
-        {'x': [0, 0], 'y': [0, 0], 'z': [-20, 20]},
-        {'x': [0, 0], 'y': [-20, 20], 'z': [0, 0]},
-        {'x': [-20, 20], 'y': [0, 0], 'z': [0, 0]}
+        {'x': [0, 0], 'y': [0, 0], 'z': [-10, 10]},
+        {'x': [0, 0], 'y': [-10, 10], 'z': [0, 0]},
+        {'x': [-10, 10], 'y': [0, 0], 'z': [0, 0]}
     ]
     return lines
 
-def plot_image(points, mundo=[[0],[0],[0],[1]]):
-    """
-    Plota um gráfico 3D dos pontos fornecidos e um ponto adicional 'mundo'.
-    """
-    # Criação dos DataFrames e gráficos para os pontos
-    dataframes = [create_dataframe_from_points(point_set) for point_set in points]
-    traces = [px.line_3d(df, x="x", y="y", z="z", color_discrete_sequence=[generate_random_color()]).data[0] for df in dataframes]
+def plot_image(points, mundo=None, box_params=None, cano_params=None, cone_params=None, tronco_params=None):
+    if mundo is None:
+        mundo = [[0], [0], [0], [1]]
 
-    # Criação da figura principal
+    dataframes = [pd.DataFrame({"x": point_set[0], "y": point_set[1], "z": point_set[2]}) for point_set in points]
+    traces = [go.Scatter3d(
+        x=df["x"],
+        y=df["y"],
+        z=df["z"],
+        mode='lines',
+        line=dict(color='grey')  # Cor cinza para pontos não sólidos
+    ) for df in dataframes]
+
     fig = go.Figure(data=traces)
 
-    # Adição das linhas de referência (eixos)
+    # Adiciona as linhas de referência
     lines = create_3d_lines()
     for line in lines:
-        fig.add_scatter3d(mode='lines', x=line['x'], y=line['y'], z=line['z'], line=dict(color='black'))
+        fig.add_trace(go.Scatter3d(
+            x=line['x'],
+            y=line['y'],
+            z=line['z'],
+            mode='lines',
+            line=dict(color='black')
+        ))
 
-    # Adição do ponto 'mundo'
+    # Adiciona os pontos de referência
     df_mundo = pd.DataFrame({'x': mundo[0], 'y': mundo[1], 'z': mundo[2]})
-    fig.add_trace(px.scatter_3d(df_mundo, x='x', y='y', z='z', size=[0.5]).data[0])
+    fig.add_trace(go.Scatter3d(
+        x=df_mundo['x'],
+        y=df_mundo['y'],
+        z=df_mundo['z'],
+        mode='markers',
+        marker=dict(size=5, color='red')
+    ))
 
-    # Atualização do layout
+    # Adiciona os sólidos
+    if box_params:
+        plot_solid_box(fig, box_params)
+
+    if cano_params:
+        p0, p1, t0, t1, radius = cano_params
+        plot_solid_cano(fig, p0, p1, t0, t1, radius)
+
+    if cone_params:
+        radius, height = cone_params
+        plot_solid_cone(fig, radius, height)
+
+    if tronco_params:
+        radius1, radius2, height = tronco_params
+        plot_solid_tronco(fig, radius1, radius2, height)
+
     fig.update_layout(
         scene=dict(
-            xaxis=dict(range=[-20, 20]),
-            yaxis=dict(range=[-20, 20]),
-            zaxis=dict(range=[-20, 20]),
+            xaxis=dict(range=[-10, 10]),
+            yaxis=dict(range=[-10, 10]),
+            zaxis=dict(range=[-10, 10]),
             aspectmode="cube",
         )
     )
 
-    # Exibição do gráfico
     pio.show(fig)
 
-# Exemplo de uso
-points = [
-    ([1, 2, 3], [4, 5, 6], [7, 8, 9])
-]
-plot_image(points)
+
+def main():
+    points = [
+        ([0, 0, 0], [0, 0, 0], [0, 0, 0]) #gambiarra pra sumir com a reta cinza
+    ]
+    box_params = 5  # Lado da caixa
+    cano_params = (np.array([1, 1, 1]), np.array([2, 2, 2]), np.array([2, 1, 1]), np.array([1, 2, 1]), 0.5)
+    cone_params = (1, 3)  # Raio e altura do cone
+    tronco_params = (2, 1, 2)  # Raio 1, Raio 2 e altura do tronco
+    plot_image(points, box_params=box_params, cano_params=cano_params, cone_params=cone_params, tronco_params=tronco_params)
+
+
+if __name__ == "__main__":
+    main()
