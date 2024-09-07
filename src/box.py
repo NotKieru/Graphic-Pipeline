@@ -1,7 +1,4 @@
-import matplotlib.pyplot as plt
 import numpy as np
-
-
 def create_open_box(side_length):
     """
     Cria uma caixa de madeira sem tampa com base quadrada e altura igual ao comprimento dos lados.
@@ -29,17 +26,3 @@ def create_open_box(side_length):
     ]
 
     return vertices, faces
-
-# Define os limites dos eixos
-ax.set_xlim([0, lado])
-ax.set_ylim([0, lado])
-ax.set_zlim([altura, 0])
-
-# Define os rótulos dos eixos
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-
-ax.set_title('LA Caixa de Papel')
-
-plt.show()

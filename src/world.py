@@ -1,4 +1,4 @@
-# mundo3D.py
+# mundo.py
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,6 +15,36 @@ def create_3d_lines():
         {'x': [-10, 10], 'y': [0, 0], 'z': [0, 0]}
     ]
     return lines
+
+
+def compute_camera_basis(solid_centers):
+    # Compute the average center of all solids
+    average_center = np.mean(solid_centers, axis=0)
+
+    # Define the new camera basis vectors (unit vectors along the coordinate axes)
+    camera_basis = np.eye(3)  # For simplicity, assuming that the camera basis is aligned with the world axes
+
+    # Compute the transformation matrix from world to camera coordinates
+    translation = -average_center
+    transformation_matrix = np.hstack([camera_basis, translation.reshape(-1, 1)])
+    transformation_matrix = np.vstack([transformation_matrix, [0, 0, 0, 1]])
+
+    return transformation_matrix
+
+
+def transform_coordinates(points, transformation_matrix):
+    points_transformed = []
+    for point_set in points:
+        # Convert the points to homogeneous coordinates
+        points_homogeneous = np.vstack([np.array(point_set), np.ones(len(point_set[0]))])
+        # Apply the transformation matrix
+        points_transformed_homogeneous = transformation_matrix @ points_homogeneous
+        # Convert back to non-homogeneous coordinates
+        points_transformed = [points_transformed_homogeneous[0, :], points_transformed_homogeneous[1, :],
+                              points_transformed_homogeneous[2, :]]
+        points_transformed.append(points_transformed)
+
+    return points_transformed
 
 
 def plot_image(points, mundo=None, box_params=None, cano_params=None, cone_params=None, tronco_params=None,
@@ -56,7 +86,7 @@ def plot_image(points, mundo=None, box_params=None, cano_params=None, cone_param
 
     # Adiciona os sólidos
     if box_params:
-        plot_solid_box(fig, box_params)
+        plot_solid_box(fig, *box_params)
 
     if cano_params:
         p0, p1, t0, t1, radius = cano_params
@@ -86,16 +116,33 @@ def plot_image(points, mundo=None, box_params=None, cano_params=None, cone_param
 
 
 def main():
+    # Definir os centros de massa dos sólidos
+    box_center = np.array([2, 2, 2])
+    cano_center = (np.array([1, 1, 1]) + np.array([2, 2, 2])) / 2
+    cone_center = np.array([0, 0, 0])
+    tronco_center = np.array([0, 0, 0])
+    mug_center = np.array([0, 0, 0])
+
+    solid_centers = np.array([box_center, cano_center, cone_center, tronco_center, mug_center])
+
+    # Calcular a matriz de transformação
+    transformation_matrix = compute_camera_basis(solid_centers)
+
+    # Coordenadas dos sólidos (exemplo de dados)
     points = [
-        ([0, 0, 0], [0, 0, 0], [0, 0, 0])  # gambiarra pra sumir com a reta cinza
+        ([0, 0, 0], [0, 0, 0], [0, 0, 0])  # Exemplo de dados vazios
     ]
-    box_params = 5  # Lado da caixa
+
+    # Transformar coordenadas para o sistema de coordenadas da câmera
+    points_transformed = transform_coordinates(points, transformation_matrix)
+
+    box_params = (5, 0.5)  # Lado da caixa e deslocamento do cubo interno
     cano_params = (np.array([1, 1, 1]), np.array([2, 2, 2]), np.array([2, 1, 1]), np.array([1, 2, 1]), 0.5)
     cone_params = (1, 3)  # Raio e altura do cone
     tronco_params = (2, 1, 2)  # Raio 1, Raio 2 e altura do tronco
     mug_params = create_mug()  # Adiciona a caneca
 
-    plot_image(points, box_params=box_params, cano_params=cano_params, cone_params=cone_params,
+    plot_image(points_transformed, box_params=box_params, cano_params=cano_params, cone_params=cone_params,
                tronco_params=tronco_params, mug_params=mug_params)
 
 
