@@ -91,8 +91,3 @@ def plot_solid_cylinder(fig, radius, height, num_points):
         ))
 
 
-
-# Exemplo de uso
-fig = go.Figure()
-plot_solid_cylinder(fig, radius=5, height=10, num_points=20)
-fig.show()
