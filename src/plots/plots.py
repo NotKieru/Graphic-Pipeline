@@ -1,10 +1,10 @@
 # plots.py
 import plotly.graph_objects as go
 
-from src.box import create_open_box
-from src.cano import generate_cano_coordinates
-from src.cone import create_cone
-from src.troncoCone import create_tronco
+from src.objects.box import create_open_box
+from src.objects.cone import create_cone
+from src.objects.coneTrunk import create_tronco
+from src.objects.pipe import generate_cano_coordinates
 
 
 def plot_solid_box(fig, side_length):
